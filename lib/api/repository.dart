@@ -1,0 +1,103 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
+import 'package:warung_santai/model/post.dart';
+import 'package:http/http.dart' as http;
+
+class Repository {
+  final baseUrl = 'http://10.20.30.14:8000/api';
+
+  //get data with metode async
+  Future<Map<String, dynamic>> fetchPosts(int page) async {
+    final response = await http.get(Uri.parse('$baseUrl/posts?page=$page'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      var res = Postmodel.fromJson(response.body);
+
+      return {
+        'posts': res.post ?? [],
+        // karena di response lu GA ADA next_page_url
+        // jadi sementara null aja
+      };
+    } else {
+      log("STATUS: ${response.statusCode}");
+      log("BODY: ${response.body}");
+      throw Exception('Failed to load data');
+    }
+  }
+
+  //insert posts
+  Future<bool> insertPost(File? image, String title, String content) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/posts'),
+      );
+
+      request.fields['title'] = title;
+      request.fields['description'] = content;
+
+      if (image != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            image.path,
+          ),
+        );
+      }
+
+      final response = await request.send();
+      final resBody = await response.stream.bytesToString();
+
+      log("STATUS CODE: ${response.statusCode}");
+      log("RESPONSE BODY: $resBody");
+
+      if (response.statusCode == 201) {
+        return true;
+      } else {
+        // lempar error biar bisa ditangkap UI
+        throw Exception("Upload gagal: $resBody");
+      }
+    } catch (e) {
+      log("ERROR CATCH: $e");
+      rethrow;
+    }
+  }
+
+  //update post
+  Future<bool> updatePost(
+      File? image, String title, String content, int id) async {
+    final request =
+        http.MultipartRequest('POST', Uri.parse('$baseUrl/posts/$id'));
+    request.fields['title'] = title;
+    request.fields['content'] = content;
+    request.fields['_method'] = 'PUT';
+    if (image != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          image.path,
+        ),
+      );
+    }
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw false;
+    }
+  }
+
+  // delete post
+  Future<bool> deletePost(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/posts/$id'));
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw false;
+    }
+  }
+}
