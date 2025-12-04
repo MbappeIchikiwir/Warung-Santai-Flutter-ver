@@ -2,7 +2,7 @@
 class ApiConfig {
   // Dev: Hotspot lu, Production: Ganti ke https://api.warungsantai.com/api
   static const String baseUrl =
-      'http://10.20.30.14:8000/api'; // Port 8000 standar Laravel
+      'http://192.168.44.82:8000/api'; // Port 8000 standar Laravel
   static const String loginEndpoint = '/login';
   static const String productsEndpoint = '/products';
   static const String postsEndpoint = '/posts';

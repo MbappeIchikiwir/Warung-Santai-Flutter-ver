@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const baseUrl = 'http://10.20.30.14:8000/api'; // Ganti sesuai IP backend-mu
+const baseUrl = 'http://192.168.44.82:8000/api'; // Ganti sesuai IP backend-mu
 final storage = FlutterSecureStorage();
 
 class AuthService {
