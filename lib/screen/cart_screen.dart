@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/cart_provider.dart';
-import '../model/cart_item_model.dart'; // Pastikan import model
+import '../model/cart_item_model.dart';
+// [FIX] Hapus import food_details_screen.dart karena tidak dipakai (mengatasi unused_import)
+import 'home_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -17,7 +19,7 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch data saat pertama kali buka screen
+    // Fetch data saat screen dibuka
     Future.microtask(
         () => Provider.of<CartProvider>(context, listen: false).fetchCart());
   }
@@ -28,8 +30,7 @@ class _CartScreenState extends State<CartScreen> {
     final groupedItems = cart.groupedBySeller;
 
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF5F5F5), // Background abu muda ala E-commerce
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: Text(
           'Keranjang (${cart.cartList.length})',
@@ -40,21 +41,25 @@ class _CartScreenState extends State<CartScreen> {
         elevation: 0.5,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          // Tombol Delete Multiple
           if (cart.selectedItemCount > 0)
             TextButton(
               onPressed: () {
-                // Konfirmasi hapus
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: Text("Hapus ${cart.selectedItemCount} barang?"),
+                    // [FIX] Pastikan parameter 'title' ada di sini (mengatasi missing_required_argument)
+                    title: Text(
+                      "Hapus ${cart.selectedItemCount} barang?",
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    ),
+                    content: const Text(
+                        "Barang yang dipilih akan dihapus dari keranjang."),
                     actions: [
                       TextButton(
-                          child: Text("Batal"),
+                          child: const Text("Batal"),
                           onPressed: () => Navigator.pop(ctx)),
                       TextButton(
-                          child: Text("Hapus",
+                          child: const Text("Hapus",
                               style: TextStyle(color: Colors.red)),
                           onPressed: () {
                             cart.removeSelectedItems();
@@ -76,10 +81,9 @@ class _CartScreenState extends State<CartScreen> {
         child: cart.isLoading && cart.cartList.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : cart.cartList.isEmpty
-                ? _buildEmptyState(context)
+                ? _buildEmptyState(context) // State kosong
                 : Column(
                     children: [
-                      // List Barang (Scrollable)
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.only(bottom: 20),
@@ -93,7 +97,6 @@ class _CartScreenState extends State<CartScreen> {
                           },
                         ),
                       ),
-                      // Checkout Bar
                       _buildBottomBar(context, cart),
                     ],
                   ),
@@ -101,8 +104,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // --- WIDGETS KECIL (Split Methods) ---
-
+  // --- WIDGET: EMPTY STATE ---
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
@@ -116,21 +118,37 @@ class _CartScreenState extends State<CartScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
+
+          // Tombol Navigasi ke Home
           ElevatedButton(
-            onPressed: () => Navigator.pop(context), // Balik ke Home
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const HomeScreen(title: 'Home')),
+                (route) => false,
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green[700],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
+              elevation: 2,
             ),
-            child: const Text("Mulai Belanja"),
+            child: Text(
+              "Mulai Belanja",
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            ),
           )
         ],
       ),
     );
   }
 
+  // --- WIDGET: BOTTOM BAR ---
   Widget _buildBottomBar(BuildContext context, CartProvider cart) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -147,30 +165,8 @@ class _CartScreenState extends State<CartScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Voucher Row (Optional UI improvement)
-            InkWell(
-              onTap: () {}, // Todo: Buka menu voucher
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Row(
-                  children: [
-                    const Icon(Icons.confirmation_number_outlined,
-                        color: Colors.orange, size: 20),
-                    const SizedBox(width: 8),
-                    Text("Makin hemat pakai promo",
-                        style: GoogleFonts.poppins(fontSize: 12)),
-                    const Spacer(),
-                    const Icon(Icons.chevron_right,
-                        size: 20, color: Colors.grey),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
             Row(
               children: [
-                // Checkbox Select All
                 Row(
                   children: [
                     Checkbox(
@@ -182,7 +178,6 @@ class _CartScreenState extends State<CartScreen> {
                   ],
                 ),
                 const Spacer(),
-                // Total Price & Button
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -213,6 +208,7 @@ class _CartScreenState extends State<CartScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[700],
                     disabledBackgroundColor: Colors.grey[300],
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -220,11 +216,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   child: Text(
                     "Checkout (${cart.selectedItemCount})",
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        color: cart.selectedItemCount == 0
-                            ? Colors.grey
-                            : Colors.white),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -236,7 +228,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 }
 
-// --- SUB-WIDGETS (Extracted for Performance) ---
+// --- WIDGET: SELLER GROUP & ITEM ROW ---
 
 class _SellerGroupCard extends StatelessWidget {
   final String sellerId;
@@ -258,7 +250,6 @@ class _SellerGroupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Seller Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
@@ -276,17 +267,10 @@ class _SellerGroupCard extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold, fontSize: 14),
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {}, // Navigasi ke toko
-                  child: Text("Kunjungi Toko",
-                      style: TextStyle(fontSize: 12, color: Colors.green[700])),
-                )
               ],
             ),
           ),
           const Divider(height: 1),
-          // List Items dalam Toko ini
           ...items.map((item) => _CartItemRow(item: item)).toList(),
         ],
       ),
@@ -320,17 +304,14 @@ class _CartItemRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Checkbox Item
             Checkbox(
               value: item.isSelected,
               activeColor: Colors.green[700],
               onChanged: (val) => cart.toggleSelectItem(item.id),
             ),
-            // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                // Ganti NetworkImage jika pakai URL
                 item.imageUrl,
                 width: 80,
                 height: 80,
@@ -339,11 +320,10 @@ class _CartItemRow extends StatelessWidget {
                     width: 80,
                     height: 80,
                     color: Colors.grey[200],
-                    child: Icon(Icons.broken_image)),
+                    child: const Icon(Icons.broken_image)),
               ),
             ),
             const SizedBox(width: 12),
-            // Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,11 +334,6 @@ class _CartItemRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(fontSize: 14),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Stok: ${item.maxStock}", // Info stok
-                    style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                  ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -368,7 +343,6 @@ class _CartItemRow extends StatelessWidget {
                         style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold, fontSize: 14),
                       ),
-                      // Quantity Buttons
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey[300]!),
